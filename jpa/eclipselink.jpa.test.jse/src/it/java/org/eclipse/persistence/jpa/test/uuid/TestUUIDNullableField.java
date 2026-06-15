@@ -20,10 +20,14 @@ import java.util.UUID;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 
+import org.eclipse.persistence.internal.jpa.EntityManagerFactoryImpl;
 import org.eclipse.persistence.jpa.test.framework.DDLGen;
 import org.eclipse.persistence.jpa.test.framework.Emf;
 import org.eclipse.persistence.jpa.test.framework.EmfRunner;
+import org.eclipse.persistence.platform.database.DatabasePlatform;
 import org.eclipse.persistence.jpa.test.uuid.model.UUIDNullableFieldEntity;
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -39,12 +43,34 @@ import static org.junit.Assert.assertNull;
 @RunWith(EmfRunner.class)
 public class TestUUIDNullableField {
 
+    private static final String TABLE_NAME = "uuid_nullable_field";
+    private static final String UUID_COLUMN_NAME = "optional_uuid";
+
     @Emf(
             name = "TestUUIDNullableField",
             createTables = DDLGen.DROP_CREATE,
             classes = { UUIDNullableFieldEntity.class }
     )
     private EntityManagerFactory emf;
+
+    @Before
+    public void verifyPostgreSQLUUIDColumn() {
+        Assume.assumeTrue("Test requires PostgreSQL native UUID column support", getPlatform().isPostgreSQL());
+
+        EntityManager em = emf.createEntityManager();
+        try {
+            String dataType = (String) em.createNativeQuery(
+                            "SELECT data_type FROM information_schema.columns "
+                                    + "WHERE table_schema = current_schema() "
+                                    + "AND table_name = ? AND column_name = ?")
+                    .setParameter(1, TABLE_NAME)
+                    .setParameter(2, UUID_COLUMN_NAME)
+                    .getSingleResult();
+            assertEquals("PostgreSQL column must use the native UUID type", "uuid", dataType);
+        } finally {
+            em.close();
+        }
+    }
 
     @Test
     public void testNullUUIDFieldRoundtrip() {
@@ -57,6 +83,10 @@ public class TestUUIDNullableField {
         UUID uuid = UUID.randomUUID();
         Long id = persistWithUuid(uuid);
         verifyUuidOnRead(id, uuid);
+    }
+
+    private DatabasePlatform getPlatform() {
+        return ((EntityManagerFactoryImpl) emf).getDatabaseSession().getPlatform();
     }
 
     private Long persistWithNullUuid() {
