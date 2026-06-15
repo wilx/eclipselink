@@ -14,9 +14,9 @@ name: EclipseLink PR build
 
 on:
   push:
-    branches: [ '4.0' ]
+    branches: [ '4.0', 'codex', '4.0.9-uuid' ]
   pull_request:
-    branches: [ '4.0' ]
+    branches: [ '4.0', 'codex', '4.0.9-uuid' ]
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 jobs:
@@ -41,6 +41,17 @@ jobs:
           mysql -e 'CREATE DATABASE ecltests;' -uroot -proot
           mysql -e 'SHOW DATABASES;' -uroot -proot
           mysql -e 'status;' -uroot -proot
+      - name: Install PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql postgresql-contrib
+      - name: Start PostgreSQL Database
+        run: |
+          sudo systemctl start postgresql.service
+          sudo -u postgres psql -c "CREATE USER scott WITH PASSWORD 'tiger';"
+          sudo -u postgres psql -c "CREATE DATABASE ecltests OWNER scott;"
+          sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE ecltests TO scott;"
+          sudo -u postgres psql -c "\l"
       - name: Cache local Maven repository
         uses: actions/cache@v4
         with:
