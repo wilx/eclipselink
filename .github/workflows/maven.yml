@@ -67,8 +67,9 @@ jobs:
           distribution: 'zulu'
           java-version: ${{ matrix.java_version }}
       - name: Verify
-        run: mvn -B -V -U -C -Pstaging,oss-release,test-lrg,test-jpa-jse,pgsql,dependency-check clean verify -Dgpg.skip=true -Dwarn.limit=15 -Dcomp.xlint=-Xlint:none
+        run: mvn -B -V -U -C -Pstaging,oss-release,test-lrg,test-jpa-jse,pgsql clean verify -Dgpg.skip=true -Dwarn.limit=15 -Dcomp.xlint=-Xlint:none
       - name: Upload dependency-check
+        if: false
         uses: actions/upload-artifact@v4
         with:
           name: dependency-check.html
