@@ -731,6 +731,29 @@ public class DatabasePlatform extends DatasourcePlatform implements DDLPlatform 
     }
 
     /**
+     * Return the SQL type for a standard JPQL CAST target using this platform's
+     * Java-to-database type mapping. The default uses required column sizes as a
+     * fallback. Platforms should override this when CAST has different type names
+     * or size requirements, especially to avoid truncating strings to a column's
+     * default length.
+     *
+     * @param javaType the target String, Integer, Long, Float, or Double type
+     * @return the SQL type name, including a required size
+     */
+    public String getCastTypeName(Class<?> javaType) {
+        FieldDefinition.DatabaseType databaseType = getDatabaseType(javaType);
+        String typeName = databaseType.name();
+        // Keep required sizes for the fallback, but omit column precision and scale
+        // for floating-point conversions: e.g. Oracle NUMBER(p) implies scale zero
+        // and would round away the fractional part.
+        if (javaType != Float.class && javaType != Double.class
+                && databaseType.allowSize() && databaseType.requireSize()) {
+            typeName += "(" + databaseType.defaultSize() + ")";
+        }
+        return typeName;
+    }
+
+    /**
      * ADVANCED:
      * Return the code for preparing cursored output
      * parameters in a stored procedure

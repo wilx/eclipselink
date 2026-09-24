@@ -87,6 +87,15 @@ public class PostgreSQLPlatform extends DatabasePlatform {
         this.pingSQL = "SELECT 1";
     }
 
+    @Override
+    public String getCastTypeName(Class<?> javaType) {
+        if (javaType == String.class) {
+            // An unsized VARCHAR preserves the whole value; VARCHAR(n) truncates it.
+            return getDatabaseType(javaType).name();
+        }
+        return super.getCastTypeName(javaType);
+    }
+
     /**
      * Return the JDBC type for the Java type. For some reason PostgreSQL does
      * not seem to like the JDBC Blob type (PostgreSQL 8.2).

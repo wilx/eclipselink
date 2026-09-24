@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2024 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -154,6 +155,7 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -613,7 +615,15 @@ final class TypeResolver extends JPQLFunctionsAbstractBuilder implements Eclipse
 
     @Override
     public void visit(CastExpression expression) {
-        type = Object.class;
+        type = switch (expression.getDatabaseType().toParsedText().toUpperCase(Locale.ROOT)) {
+            case "STRING" -> String.class;
+            case "INTEGER" -> Integer.class;
+            case "LONG" -> Long.class;
+            case "FLOAT" -> Float.class;
+            case "DOUBLE" -> Double.class;
+            // EclipseLink also accepts explicit database types, including size and scale.
+            default -> Object.class;
+        };
     }
 
     @Override

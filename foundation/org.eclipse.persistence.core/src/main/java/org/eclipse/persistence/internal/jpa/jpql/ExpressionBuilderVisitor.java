@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2006, 2025 Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2006, 2026 IBM Corporation. All rights reserved.
- * Copyright (c) 2024 Contributors to the Eclipse Foundation. All rights reserved.
+ * Copyright (c) 2024, 2026 Contributors to the Eclipse Foundation. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -627,10 +627,11 @@ final class ExpressionBuilderVisitor extends JPQLFunctionsAbstractBuilder implem
 
         // Now create the CAST expression
         org.eclipse.persistence.jpa.jpql.parser.Expression databaseType = expression.getDatabaseType();
-        queryExpression = queryExpression.cast(databaseType.toParsedText());
-
-        // Set the expression type
-        type[0] = Object.class;
+        type[0] = queryContext.getType(expression);
+        String typeName = type[0] == Object.class
+                ? databaseType.toParsedText()
+                : queryContext.getSession().getPlatform().getCastTypeName(type[0]);
+        queryExpression = queryExpression.cast(typeName);
     }
 
     @Override

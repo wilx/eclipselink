@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2026 Contributors to the Eclipse Foundation. All rights reserved.
  * Copyright (c) 1998, 2026 Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 1998, 2026 IBM Corporation. All rights reserved.
  *
@@ -205,6 +206,22 @@ public class OraclePlatform extends DatabasePlatform {
         } else {
             super.appendCalendar(calendar, writer);
         }
+    }
+
+    @Override
+    public String getCastTypeName(Class<?> javaType) {
+        if (javaType == String.class) {
+            String typeName = getDatabaseType(javaType).name();
+            // Oracle requires a size. Use the STANDARD limits, not the default
+            // column length; BYTE also avoids dependence on NLS_LENGTH_SEMANTICS.
+            if ("VARCHAR2".equalsIgnoreCase(typeName)) {
+                return typeName + "(4000 BYTE)";
+            }
+            if ("NVARCHAR2".equalsIgnoreCase(typeName)) {
+                return typeName + "(2000)";
+            }
+        }
+        return super.getCastTypeName(javaType);
     }
 
     /**
